@@ -17,7 +17,16 @@ const PORT = process.env.PORT || 5000;
 import path from 'path';
 
 // Middleware
-app.use(cors());
+// app.use(cors());
+app.disable('x-powered-by');
+
+app.use(cors({
+  origin: [
+    "https://ghazipackages.com",
+    "https://www.ghazipackages.com"
+  ],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
