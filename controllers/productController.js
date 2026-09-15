@@ -32,7 +32,30 @@ export const createProduct = async (req, res) => {
   const connection = await db.getConnection();
 
   try {
-    const { id, name, category, price, dimensions, ply, material, condition, stock, description, customizable, images, bulkPricing } = req.body;
+    const { id, name, category, price, dimensions, ply, material, condition, stock, description } = req.body;
+    
+    let customizable = false;
+    if (req.body.customizable === 'true' || req.body.customizable === true) {
+      customizable = true;
+    }
+
+    let bulkPricing = [];
+    if (req.body.bulkPricing) {
+      try {
+        bulkPricing = typeof req.body.bulkPricing === 'string' ? JSON.parse(req.body.bulkPricing) : req.body.bulkPricing;
+      } catch (e) {
+        console.error('Error parsing bulkPricing:', e);
+      }
+    }
+
+    // Get image URLs from uploaded files OR from body if passed as array
+    let images = [];
+    if (req.files && req.files.length > 0) {
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      images = req.files.map(file => `${baseUrl}/uploads/${file.filename}`);
+    } else if (req.body.images) {
+      images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+    }
 
     await connection.beginTransaction();
 
@@ -55,7 +78,7 @@ export const createProduct = async (req, res) => {
     }
 
     await connection.commit();
-    res.status(201).json({ message: 'Product created successfully' });
+    res.status(201).json({ message: 'Product created successfully', images });
   } catch (error) {
     await connection.rollback();
     res.status(500).json({ message: 'Error creating product', error: error.message });

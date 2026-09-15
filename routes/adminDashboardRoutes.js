@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../config/db.js';
+import { upload } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -378,7 +379,7 @@ const productForm = (categories) => {
         </div>
       </div>
       <div class="panel-body">
-        <form class="form-grid" method="post" action="/admin/products">
+        <form class="form-grid" method="post" action="/admin/products" enctype="multipart/form-data">
           <div class="form-row">
             <label>Product ID
               <input name="id" placeholder="nb-003" required />
@@ -424,9 +425,9 @@ const productForm = (categories) => {
           <label>Description
             <textarea name="description" placeholder="Describe this product for customers."></textarea>
           </label>
-          <label>Image URLs
-            <textarea name="images" placeholder="One image URL per line"></textarea>
-            <span class="hint">Use public URLs or frontend public paths like /new-boxes.png.</span>
+          <label>Product Images (Upload)
+            <input name="images" type="file" multiple accept="image/*" />
+            <span class="hint">Select one or more images from your computer.</span>
           </label>
           <label>Bulk Pricing
             <textarea name="bulkPricing" placeholder="100:135&#10;500:120"></textarea>
@@ -802,7 +803,7 @@ router.post('/users', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/products', requireAdmin, async (req, res) => {
+router.post('/products', requireAdmin, upload.array('images', 5), async (req, res) => {
   const connection = await db.getConnection();
 
   try {
@@ -818,7 +819,6 @@ router.post('/products', requireAdmin, async (req, res) => {
       stock,
       description = '',
       customizable,
-      images = '',
       bulkPricing = '',
     } = req.body;
 
@@ -832,7 +832,8 @@ router.post('/products', requireAdmin, async (req, res) => {
     if (!Number.isFinite(numericPrice) || numericPrice < 0) throw new Error('Product price must be a valid number.');
     if (!Number.isInteger(numericStock) || numericStock < 0) throw new Error('Stock must be a valid whole number.');
 
-    const imageUrls = parseImageLines(images);
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const imageUrls = req.files ? req.files.map(file => `${baseUrl}/uploads/${file.filename}`) : [];
     const pricingTiers = parseBulkPricingLines(bulkPricing);
 
     await connection.beginTransaction();
