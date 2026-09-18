@@ -1,5 +1,5 @@
 import express from 'express';
-import { getCategories, createCategory } from '../controllers/categoryController.js';
+import { getCategories, createCategory, deleteCategory } from '../controllers/categoryController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -7,5 +7,7 @@ const router = express.Router();
 router.route('/')
   .get(getCategories)
   .post(protect, admin, createCategory);
+
+router.delete('/:id', protect, admin, deleteCategory);
 
 export default router;

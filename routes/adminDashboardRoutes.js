@@ -5,6 +5,7 @@ import db from '../config/db.js';
 import { upload } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 const money = (value) => `Rs ${Number(value || 0).toLocaleString('en-PK')}`;
 
@@ -585,7 +586,7 @@ const dashboardPage = ({ user, products, categories, users, message, error }) =>
       title: 'Backend Dashboard',
       description: 'A focused control center for catalog and user operations.',
       actions: `
-        <a class="button secondary" href="http://localhost:5173" target="_blank" rel="noreferrer">Open Website</a>
+        <a class="button secondary" href="${FRONTEND_URL}" target="_blank" rel="noreferrer">Open Website</a>
         <a class="button" href="/admin/products">Add Product</a>
       `,
     })}
@@ -641,7 +642,7 @@ const productsPage = ({ user, products, categories, message, error }) => appShel
       eyebrow: 'Catalog',
       title: 'Products',
       description: 'Create products here. Every published product is served to the React storefront through /api/products.',
-      actions: '<a class="button secondary" href="http://localhost:5173/shop/all" target="_blank" rel="noreferrer">View Storefront</a>',
+      actions: `<a class="button secondary" href="${FRONTEND_URL}/shop/all" target="_blank" rel="noreferrer">View Storefront</a>`,
     })}
     <section class="layout-two">
       ${productForm(categories)}
@@ -716,7 +717,9 @@ router.post('/login', async (req, res) => {
       return res.status(401).send(loginPage({ error: 'Invalid admin credentials.' }));
     }
 
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN || '1d',
+    });
     setAdminCookie(res, token);
     res.redirect('/admin/dashboard');
   } catch (error) {

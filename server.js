@@ -7,24 +7,25 @@ import { initDb } from './config/initDb.js';
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
 import adminDashboardRoutes from './routes/adminDashboardRoutes.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 import path from 'path';
 
 // Middleware
-// app.use(cors());
 app.disable('x-powered-by');
 
 app.use(cors({
-  origin: [
-    "https://ghazipackages.com",
-    "https://www.ghazipackages.com"
-  ],
+  origin: corsOrigins,
   credentials: true
 }));
 app.use(express.json());
@@ -38,6 +39,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/admin', adminDashboardRoutes);
 
 // Base route
